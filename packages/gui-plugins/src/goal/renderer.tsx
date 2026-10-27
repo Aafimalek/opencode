@@ -10,8 +10,8 @@ const status = {
 } as const
 
 /**
- * The session's `/goal` above its composer: the status as a pill, and a menu with the objective, the last reason and
- * the actions that apply. The server's goal plugin keeps the goal in the session's metadata.
+ * The session's `/goal` above its composer: the status as a pill, and a menu headed by the objective with the actions
+ * that apply. The server's goal plugin keeps the goal in the session's metadata; a bare `/goal` shows the last reason.
  */
 const setup: Plugin.Setup<typeof Goal> = (ctx) => {
   const command = (input: ComposerPillProps, text: "pause" | "resume" | "clear") =>
@@ -35,9 +35,7 @@ const setup: Plugin.Setup<typeof Goal> = (ctx) => {
       if (!goal) return
 
       const view = status[goal.status]
-      const rows: ComposerPillRow[] = [{ id: "objective", label: goal.objective, icon: "checklist" }]
-
-      if (goal.reason) rows.push({ id: "reason", label: goal.reason, icon: "speech-bubble" })
+      const rows: ComposerPillRow[] = []
 
       if (goal.status === "active")
         rows.push({ id: "pause", label: ctx.t("pause"), icon: "stop", run: () => command(input, "pause") })
@@ -47,7 +45,7 @@ const setup: Plugin.Setup<typeof Goal> = (ctx) => {
 
       rows.push({ id: "clear", label: ctx.t("clear"), icon: "outline-trash", run: () => command(input, "clear") })
 
-      return { label: ctx.t(view.label), icon: view.icon, tone: view.tone, title: ctx.t("title"), rows }
+      return { label: ctx.t(view.label), icon: view.icon, tone: view.tone, title: goal.objective, rows }
     },
   })
 }
