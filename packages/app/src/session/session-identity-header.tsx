@@ -1,5 +1,5 @@
 import type { SessionInfo } from "@opencode/client/promise"
-import type { MountedSession, SessionScreen } from "@opencode/gui-extensions/sdk"
+import type { MountedSession, SessionScreen } from "@opencode/plugin/gui"
 import { Icon } from "@opencode/ui/icon"
 import { Menu } from "@opencode/ui/menu"
 import { Tooltip } from "@opencode/ui/tooltip"
@@ -22,7 +22,7 @@ import {
   type ParentProps,
 } from "solid-js"
 import { createStore } from "solid-js/store"
-import { ExtensionSlot } from "@/runtime/extension/render"
+import { PluginSlot } from "@/runtime/plugin/render"
 import { containsDirectory, getFilename } from "@opencode/util/path"
 import { useServer } from "@/runtime/server/current"
 import { ServerConnection, useServers } from "@/runtime/server/registry"
@@ -81,9 +81,8 @@ export function SessionHeaderLayout(
           </span>
           {props.children}
         </div>
-        <Show when={props.actions}>
-          <div class="session-header-actions">{props.actions}</div>
-        </Show>
+        {/* Each read of a JSX prop renders it again, so the actions render once, from the condition's value. */}
+        <Show when={props.actions}>{(actions) => <div class="session-header-actions">{actions()}</div>}</Show>
       </div>
     </SessionHeaderCollapse.Provider>
   )
@@ -267,7 +266,7 @@ export function SessionLocation(props: {
             <Show when={worktree() || git()}>
               <Show when={props.context} fallback={workspace()}>
                 {(context) => (
-                  <ExtensionSlot
+                  <PluginSlot
                     at="session.location.workspace"
                     fallback={workspace()}
                     input={{
@@ -317,7 +316,7 @@ export function SessionLocation(props: {
             </Show>
             <Show when={props.context}>
               {(context) => (
-                <ExtensionSlot
+                <PluginSlot
                   at="session.location.menu"
                   input={{
                     get session() {
