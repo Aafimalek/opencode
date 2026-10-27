@@ -733,13 +733,16 @@ for (const binding of ["mod+alt+p", "none"]) {
     const search = page.getByRole("combobox", { name: "Search projects", exact: true })
     await expect(search).toBeFocused()
     const keys = page.getByRole("option", { name: /^Add project/ }).locator('[data-component="keybind-v2"]')
+
     if (binding === "none") await expect(keys).toHaveCount(0)
+
     if (binding !== "none") await expect(keys).toContainText("P")
 
     const modifier = (await page.evaluate(() => navigator.platform.includes("Mac"))) ? "Meta" : "Control"
     await search.press(`${modifier}+o`)
     await search.fill("still searching")
     await expect(search).toHaveValue("still searching")
+
     if (binding === "none") return
 
     await search.press(`${modifier}+Alt+p`)

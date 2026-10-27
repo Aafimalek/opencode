@@ -259,9 +259,11 @@ function fitPath(value: string, width: number, font: string) {
   context.font = font
   const fits = (text: string) => context.measureText(text).width <= width
   const first = parts[0] === "" ? 2 : 1
+
   const candidates = Array.from({ length: Math.max(0, parts.length - 2 - first) }, (_, index) =>
     [...parts.slice(0, parts.length - 3 - index), "…", ...parts.slice(-2)].join(separator),
   )
+
   const minimum = candidates.at(-1) ?? value
 
   return {
@@ -297,6 +299,7 @@ function NewSessionLocation(props: {
 
     return props.workspace === "main" ? props.root : props.workspace
   }
+
   const fitted = createMemo(() => fitPath(path() ?? "", layout.width, layout.font))
 
   return (
