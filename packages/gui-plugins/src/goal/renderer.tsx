@@ -4,8 +4,8 @@ import { showToast } from "@opencode/ui/toast"
 import type Goal from "./index"
 
 const status = {
-  active: { label: "title", icon: "status-active", tone: undefined },
-  paused: { label: "paused", icon: "status", tone: "warning" },
+  active: { label: "title", icon: "outline-steer", tone: undefined },
+  paused: { label: "paused", icon: "circle-exclamation", tone: "warning" },
   complete: { label: "met", icon: "circle-check", tone: "success" },
 } as const
 
@@ -35,9 +35,9 @@ const setup: Plugin.Setup<typeof Goal> = (ctx) => {
       if (!goal) return
 
       const view = status[goal.status]
-      const rows: ComposerPillRow[] = [{ id: "objective", label: goal.objective, icon: "task" }]
+      const rows: ComposerPillRow[] = [{ id: "objective", label: goal.objective, icon: "checklist" }]
 
-      if (goal.reason) rows.push({ id: "reason", label: goal.reason, icon: "info" })
+      if (goal.reason) rows.push({ id: "reason", label: goal.reason, icon: "speech-bubble" })
 
       if (goal.status === "active")
         rows.push({ id: "pause", label: ctx.t("pause"), icon: "stop", run: () => command(input, "pause") })
