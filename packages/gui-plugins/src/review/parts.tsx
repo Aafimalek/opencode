@@ -8,35 +8,46 @@ import type { ChangeMode, ReviewModel } from "./model"
 export function ReviewTitle(props: { review: ReviewModel }) {
   const ctx = usePlugin()
 
-  const label = (option: ChangeMode) => {
-    if (option === "git") return ctx.t("ui.sessionReview.title.git")
-
-    if (option === "branch") return ctx.t("ui.sessionReview.title.branch")
-
-    return ctx.t("ui.sessionReview.title.lastTurn")
-  }
+  const label = (option: ChangeMode) => ctx.t(`source.${option}`)
 
   return (
     <Show when={props.review.canReview() && props.review.options().length > 0}>
-      <Show
-        when={props.review.options().length === 1 && props.review.options()[0]}
-        fallback={
-          <Select
-            options={props.review.options()}
-            current={props.review.mode()}
-            label={label}
-            placement="bottom-start"
-            gutter={6}
-            onSelect={(option) => option && props.review.setMode(option)}
-          />
-        }
-      >
-        {(only) => (
-          <span class="inline-flex h-6 items-center ps-2 pe-1 text-[13px] leading-[var(--line-height-compact)] font-[530] tracking-[-0.04px] text-v2-text-text-base">
-            {label(only())}
-          </span>
-        )}
-      </Show>
+      {/* The base wraps onto a clipped second line, hidden, when the header is too narrow to show all of it. */}
+      <span class="flex h-6 min-w-0 flex-wrap items-center gap-x-1 overflow-hidden">
+        <Show
+          when={props.review.options().length === 1 && props.review.options()[0]}
+          fallback={
+            <Select
+              options={props.review.options()}
+              current={props.review.mode()}
+              label={label}
+              placement="bottom-start"
+              gutter={6}
+              onSelect={(option) => option && props.review.setMode(option)}
+            >
+              {(option) => (
+                <span class="flex min-w-0 items-baseline gap-2">
+                  <span>{label(option)}</span>
+                  <span class="truncate text-v2-text-text-muted">{ctx.t(`source.${option}.description`)}</span>
+                </span>
+              )}
+            </Select>
+          }
+        >
+          {(only) => (
+            <span class="inline-flex h-6 items-center ps-2 pe-1 text-[13px] leading-[var(--line-height-compact)] font-[530] tracking-[-0.04px] text-v2-text-text-base">
+              {label(only())}
+            </span>
+          )}
+        </Show>
+        <Show when={props.review.base()}>
+          {(base) => (
+            <span class="inline-flex h-6 items-center whitespace-nowrap text-[13px] leading-[var(--line-height-compact)] text-v2-text-text-faint">
+              {ctx.t("source.base", { name: base() })}
+            </span>
+          )}
+        </Show>
+      </span>
     </Show>
   )
 }
@@ -46,11 +57,9 @@ export function ReviewEmpty(props: { review: ReviewModel; loadingClass: string }
   const loading = () => !props.review.ready()
 
   const text = () => {
-    if (props.review.mode() === "git") return ctx.t("empty.git")
+    if (props.review.mode() === "turn") return ctx.t("noChanges")
 
-    if (props.review.mode() === "branch") return ctx.t("empty.branch")
-
-    return ctx.t("noChanges")
+    return ctx.t(`empty.${props.review.mode()}`)
   }
 
   return (
