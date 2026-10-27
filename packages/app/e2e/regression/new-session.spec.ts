@@ -208,7 +208,6 @@ test("branch search keeps results on screen while a query is pending", async ({ 
   const search = page.getByRole("combobox", { name: "Search branches", exact: true })
   const options = page.getByRole("option")
   await expect(options).toHaveCount(4)
-  const panel = page.getByRole("dialog")
   // Record any moment the list renders without rows, however brief.
   await page.getByRole("listbox").evaluate((list) => {
     const observer = new MutationObserver(() => {
