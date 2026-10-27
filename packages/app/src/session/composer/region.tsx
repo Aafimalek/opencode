@@ -337,12 +337,15 @@ export function createActiveSessionRegion(input: {
       add: (text: string, comment: boolean, source: QuoteSource) => {
         const item = { type: "quote" as const, text, commentID: uuid() }
         prompt.context.add(item)
+
         if (source.length) prompt.capture().quoteSource.add(contextItemKey(item), source)
 
         if (comment) {
           prompt.capture().quoteSource.pend(contextItemKey(item))
+
           return prompt.capture().quoteComment.set(contextItemKey(item))
         }
+
         focusPrompt()
       },
       focus: focusPrompt,
@@ -418,10 +421,12 @@ export function ActiveSessionComposerRegion(props: {
 
   const todos = createMemo(() => sessionTodos(props.session.history.messages(), props.session.data.revertMessageID()))
   // Like the old dock: the plan shows while the turn runs and still has work left, so stale todos never linger.
+
   const todosVisible = () =>
     todoEnabled() && props.session.data.working() && todos().length > 0 && !todos().every(todoFinished)
   // Matches the server: the highest-priority document that sets `experimental` decides. Migrated V1 sessions keep their
   // old `todowrite` calls, so without this check their last plan would come back.
+
   const todoEnabled = () =>
     data.location.config
       .list({ directory: location().directory })

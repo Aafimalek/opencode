@@ -222,6 +222,7 @@ function createComposerStateValue(
       key: quoteComment,
       set: (key?: string) => {
         setQuoteComment(key)
+
         if (key !== quoteSource.state.pending) quoteSource.settle()
       },
     },

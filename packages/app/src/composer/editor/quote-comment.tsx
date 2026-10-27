@@ -20,6 +20,7 @@ export function QuoteCommentEditor(props: {
   onClose: () => void
 }) {
   const language = useLanguage()
+
   const [state, setState] = createStore({
     draft: props.comment,
     rect: bounds(props.anchor),

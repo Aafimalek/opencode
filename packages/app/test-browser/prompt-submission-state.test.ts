@@ -47,11 +47,13 @@ describe("prompt submission state", () => {
     const key = draft.context.items()[0]!.key
     const source = [{ partID: "part-source", revealID: "message-source", start: 4, end: 18, text: "quoted passage" }]
     draft.quoteSource.add(key, source)
+
     const submission = createComposerSubmission({
       target: draft,
       prompt: draft.current(),
       context: draft.context.items(),
     })
+
     submission.retarget(session)
     expect(session.quoteSource.state.sources[key]).toEqual(source)
 

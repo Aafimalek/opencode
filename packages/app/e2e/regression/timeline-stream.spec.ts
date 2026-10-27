@@ -661,6 +661,7 @@ test("holds undelivered input still while live status above it comes and goes", 
   const working = page.locator('[data-component="session-working"]')
   const activity = page.locator('[data-timeline-key="activity"]')
   const lane = async () => (await activity.boundingBox())?.height
+
   const outcome = (id: string, description: string) =>
     inboxEnqueued({
       sessionID,
@@ -677,6 +678,7 @@ test("holds undelivered input still while live status above it comes and goes", 
     })
 
   const first = page.locator('[data-slot="session-timeline-notice"]').filter({ hasText: "Audit constraints" })
+
   const gap = async () => {
     const [above, below] = await Promise.all([answer.boundingBox(), first.boundingBox()])
 
@@ -1137,6 +1139,7 @@ test.describe("background shortcut", () => {
         .poll(async () => {
           const panel = (await list.boundingBox())!
           const anchor = (await capsule.boundingBox())!
+
           const end = await list
             .getByRole("menuitem")
             .locator('[data-slot="session-activity-elapsed"]')
@@ -1188,6 +1191,7 @@ test.describe("background shortcut", () => {
       ],
       sessions: [session(), session({ id: childID, parentID: sessionID, title: "Stale task", agent: "explore" })],
     })
+
     const capsule = page.locator('[data-slot="session-activity-chip"]')
 
     await expect(page.locator('[data-timeline-part-id="call_stale"]')).toContainText("Stale task (background)")
@@ -2115,7 +2119,9 @@ test("highlights a quote's source only while its first comment is written", asyn
         })),
       ),
     )
+
   const selectionCollapsed = () => page.evaluate(() => window.getSelection()?.isCollapsed ?? true)
+
   const select = (target: Locator) =>
     target.evaluate((element) => {
       const range = document.createRange()
@@ -2123,6 +2129,7 @@ test("highlights a quote's source only while its first comment is written", asyn
       window.getSelection()?.removeAllRanges()
       window.getSelection()?.addRange(range)
     })
+
   const toolbar = page.getByRole("toolbar", { name: "Quote selection" })
   const chips = page.locator('[data-component="composer-attachments"] [data-component="attachment-card"]')
   const editor = page.locator('[data-component="composer-editor"]')
@@ -2195,10 +2202,12 @@ test("highlights a quote's source only while its first comment is written", asyn
     .nth(0)
     .click()
   await expect(chips).toHaveCount(1)
+
   const rejected = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" && response.url().includes("/prompt") && response.status() === 500,
   )
+
   await editor.press("Enter")
   await rejected
   await expect(chips).toHaveCount(1)
@@ -2222,9 +2231,11 @@ test("keeps the native selection height after quoting wrapped and formatted text
       ]),
     ],
   })
+
   const source = page.locator(
     `[data-timeline-part-id="${renderedPartID("prt_quote_height")}"] [data-slot="text-part-body"]`,
   )
+
   await expect(source).toContainText("A selected passage with bold text and inline code")
   await source.evaluate((element) => {
     const paragraph = element.querySelector("p")!
@@ -2283,12 +2294,14 @@ test("reveals a pending quote's source and restores its retained draft after its
   const comment = page.locator('[data-component="composer-quote-comment"] textarea')
   await expect(comment).toBeFocused()
   await expect(chip).toContainText("Keep this exact source highlighted.")
+
   const highlighted = () =>
     page.evaluate(() =>
       [...(CSS.highlights.get("timeline-quote-source") ?? [])].flatMap((range) =>
         range.startContainer.isConnected ? [range.toString()] : [],
       ),
     )
+
   await expect.poll(highlighted).toEqual(["Keep this exact source highlighted."])
 
   const scroll = page.locator('[data-slot="session-timeline-scroll"] > [data-scrollable]')
@@ -2394,11 +2407,12 @@ test("quotes table rows and diff lines selected across a diff viewer", async ({ 
   const diffHighlights = (name: string) =>
     page.evaluate(
       (name) =>
-        [...(CSS.highlights.get(name) ?? [])]
-          .filter((range) => range.startContainer.getRootNode() instanceof ShadowRoot)
-          .map((range) => range.toString()),
+        [...(CSS.highlights.get(name) ?? [])].flatMap((range) =>
+          range.startContainer.getRootNode() instanceof ShadowRoot ? [range.toString()] : [],
+        ),
       name,
     )
+
   await expect
     .poll(() => diffHighlights("timeline-quote-source"))
     .toEqual(["export const value = 'before'", "export const value = 'after'"])
