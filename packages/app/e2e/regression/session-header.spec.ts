@@ -453,6 +453,8 @@ test.describe("location", () => {
       )
       await expectSessionTitle(page, "Location session")
       await page.getByRole("button", { name: "Toggle review", exact: true }).click()
+      // Opening review hands focus to the panel after its motion; let that finish before opening another menu.
+      await expect(page.getByRole("complementary", { name: "Review and files", exact: true })).toBeFocused()
       await expect(page.getByRole("button", { name: `Open in ${app.label}`, exact: true })).toBeVisible()
       await trigger(page).click()
       await page.getByRole("menuitem", { name: worktree, exact: true }).click()
