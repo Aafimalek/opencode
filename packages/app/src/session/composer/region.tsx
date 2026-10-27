@@ -36,7 +36,7 @@ import { SessionComposerRegion } from "./session-composer-region"
 import { createSessionComposerController, type SessionComposerController } from "./controller"
 import { SessionQueuePanel } from "./queue-panel"
 import { SessionActivityChips, type SessionActivityItem } from "./activity-chips"
-import { SessionComposerLane } from "./composer-lane"
+import { SessionComposerLane, useComposerLaneAlignment } from "./composer-lane"
 import { SessionTodoPill } from "./todo-pill"
 import { SessionGoalPill, type GoalAction } from "./goal-pill"
 import { sessionTodos, todoFinished } from "./todos"
@@ -46,8 +46,10 @@ import { composerProviderName } from "@/composer/selection"
 import { useProviders } from "@/providers/catalog/providers"
 import { SubagentBar } from "./subagent-bar"
 import { createSessionRequestModel } from "../requests/model"
-import type { Region } from "@/runtime/extension/panels"
+import type { Region } from "@/runtime/plugin/panels"
 import { SessionLocationMissing } from "./location-missing"
+import { SessionPluginPills } from "./plugin-pills"
+import type { MountedSession, SessionScreen } from "@opencode/plugin/gui"
 
 export function createActiveSessionRegion(input: {
   session: SessionModel
@@ -327,6 +329,7 @@ export function createActiveSessionRegion(input: {
 
   return {
     active,
+    focused: () => !!promptRef?.contains(document.activeElement),
     drop: {
       active: () => active()?.drop.active() ?? false,
       input: () => active()?.drop.input(),
@@ -376,6 +379,9 @@ export type ActiveSessionRegionModel = ReturnType<typeof createActiveSessionRegi
 
 export function ActiveSessionComposerRegion(props: {
   session: SessionModel
+  /** The routed session as plugins see it, for their composer pills. */
+  view: Accessor<MountedSession>
+  screen: SessionScreen
   model: SessionComposerController
   suggestionBoundary: () => HTMLElement | undefined
   onReveal: (target: string) => void
@@ -412,14 +418,17 @@ export function ActiveSessionComposerRegion(props: {
       .flatMap((task) => (task.type === "shell" ? [{ ...task, key: task.id, target: task.id }] : [])),
   )
 
+  const alignment = useComposerLaneAlignment()
   const todos = createMemo(() => sessionTodos(props.session.history.messages(), props.session.data.revertMessageID()))
 
   // Like the old dock: the plan shows while the turn runs and still has work left, so stale todos never linger.
+
   const todosVisible = () =>
     todoEnabled() && props.session.data.working() && todos().length > 0 && !todos().every(todoFinished)
 
   // Matches the server: the highest-priority document that sets `experimental` decides. Migrated V1 sessions keep their
   // old `todowrite` calls, so without this check their last plan would come back.
+
   const todoEnabled = () =>
     data.location.config
       .list({ directory: location().directory })
@@ -521,6 +530,7 @@ export function ActiveSessionComposerRegion(props: {
               <SessionTodoPill todos={todos()} />
             </Show>
             <Show when={goal()}>{(current) => <SessionGoalPill goal={current()} onAction={updateGoal} />}</Show>
+            <SessionPluginPills session={props.view()} screen={props.screen} alignment={alignment} />
           </SessionComposerLane>
           <SessionQueuePanel queue={props.model.queue} hidden={props.model.region.state.blocked()} />
         </Show>

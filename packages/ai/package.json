@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "version": "2.1.4",
+  "version": "2.2.0",
   "name": "@opencode/ai",
   "type": "module",
   "license": "MIT",
@@ -162,5 +162,10 @@
     "aws4fetch": "1.0.20",
     "effect": "catalog:",
     "google-auth-library": "10.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anomalyco/opencode.git",
+    "directory": "packages/ai"
   }
 }
