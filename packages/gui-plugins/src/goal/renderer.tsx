@@ -1,4 +1,4 @@
-import { ComposerPill, type ComposerPillProps, type ComposerPillRow, type Plugin } from "@opencode/plugin/gui"
+import { ComposerPill, type ComposerPillAction, type ComposerPillProps, type Plugin } from "@opencode/plugin/gui"
 import { SessionGoal } from "@opencode/schema/session-goal"
 import { showToast } from "@opencode/ui/toast"
 import type Goal from "./index"
@@ -35,17 +35,17 @@ const setup: Plugin.Setup<typeof Goal> = (ctx) => {
       if (!goal) return
 
       const view = status[goal.status]
-      const rows: ComposerPillRow[] = []
+      const actions: ComposerPillAction[] = []
 
       if (goal.status === "active")
-        rows.push({ id: "pause", label: ctx.t("pause"), icon: "stop", run: () => command(input, "pause") })
+        actions.push({ id: "pause", label: ctx.t("pause"), icon: "stop", run: () => command(input, "pause") })
 
       if (goal.status === "paused")
-        rows.push({ id: "resume", label: ctx.t("resume"), icon: "refresh", run: () => command(input, "resume") })
+        actions.push({ id: "resume", label: ctx.t("resume"), icon: "refresh", run: () => command(input, "resume") })
 
-      rows.push({ id: "clear", label: ctx.t("clear"), icon: "outline-trash", run: () => command(input, "clear") })
+      actions.push({ id: "clear", label: ctx.t("clear"), icon: "outline-trash", run: () => command(input, "clear") })
 
-      return { label: ctx.t(view.label), icon: view.icon, tone: view.tone, title: goal.objective, rows }
+      return { label: ctx.t(view.label), icon: view.icon, tone: view.tone, title: goal.objective, actions }
     },
   })
 }

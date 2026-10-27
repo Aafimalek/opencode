@@ -1452,6 +1452,9 @@ story("composer pills show per session, open their rows, and fail only their own
                     },
                     { id: "13", label: "#13 Draft", icon: "branch" },
                   ],
+                  actions: [
+                    { id: "refresh", label: "Refresh", run: () => void (document.body.dataset.refreshed = "") },
+                  ],
                 }),
               }),
           }),
@@ -1508,6 +1511,14 @@ story("composer pills show per session, open their rows, and fail only their own
   // A row without `run` only shows.
   await expect(rows.nth(1)).toHaveAttribute("data-disabled", "")
 
+  // Actions sit in one row under the rows.
+  const actions = menu.locator('[data-slot="session-plugin-pill-actions"] [data-slot="session-plugin-pill-action"]')
+  await expect(actions).toHaveText(["Refresh"])
+
   await rows.nth(0).click()
   await expect(page.locator("body")).toHaveAttribute("data-picked", "12")
+
+  await pills.click()
+  await actions.first().click()
+  await expect(page.locator("body")).toHaveAttribute("data-refreshed", "")
 })

@@ -76,7 +76,7 @@ function PluginPill(props: { pill: ComposerPill; input: ComposerPillProps; align
     <Show when={view()}>
       {(current) => (
         <Show
-          when={current().rows}
+          when={current().rows || current().actions}
           fallback={
             <button
               type="button"
@@ -89,45 +89,57 @@ function PluginPill(props: { pill: ComposerPill; input: ComposerPillProps; align
             </button>
           }
         >
-          {(rows) => (
-            <Menu gutter={8} placement={placement()}>
-              <Menu.Trigger
-                as="button"
-                type="button"
-                data-slot="session-plugin-pill"
-                aria-label={current().title}
-                class={capsule}
-              >
-                <Content view={current()} />
-              </Menu.Trigger>
-              <Menu.Portal>
-                <Menu.Content data-slot="session-plugin-pill-menu" aria-label={current().title ?? current().label}>
-                  <Menu.Group>
-                    <Menu.GroupLabel class="!h-auto max-w-80 !py-1.5">
-                      <span dir="auto" class="line-clamp-3 break-words">
-                        {current().title ?? current().label}
-                      </span>
-                    </Menu.GroupLabel>
-                    <For each={rows()}>
-                      {(row) => (
-                        <Menu.Item
-                          data-slot="session-plugin-pill-row"
-                          disabled={!row.run}
-                          onSelect={() => row.run?.()}
-                          badge={row.detail}
-                        >
-                          <PillIcon name={row.icon} tone={row.tone} />
-                          <span dir="auto" class="min-w-0 flex-1 truncate">
-                            {row.label}
+          <Menu gutter={8} placement={placement()}>
+            <Menu.Trigger
+              as="button"
+              type="button"
+              data-slot="session-plugin-pill"
+              aria-label={current().title}
+              class={capsule}
+            >
+              <Content view={current()} />
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Content data-slot="session-plugin-pill-menu" aria-label={current().title ?? current().label}>
+                <Menu.Group>
+                  <Menu.GroupLabel class="!h-auto max-w-80 !py-1.5">
+                    <span dir="auto" class="line-clamp-3 break-words">
+                      {current().title ?? current().label}
+                    </span>
+                  </Menu.GroupLabel>
+                  <For each={current().rows}>
+                    {(row) => (
+                      <Menu.Item
+                        data-slot="session-plugin-pill-row"
+                        disabled={!row.run}
+                        onSelect={() => row.run?.()}
+                        badge={row.detail}
+                      >
+                        <PillIcon name={row.icon} tone={row.tone} />
+                        <span dir="auto" class="min-w-0 flex-1 truncate">
+                          {row.label}
+                        </span>
+                      </Menu.Item>
+                    )}
+                  </For>
+                </Menu.Group>
+                <Show when={current().actions?.length}>
+                  <div data-slot="session-plugin-pill-actions" class="flex justify-end gap-1 px-1 pt-1">
+                    <For each={current().actions}>
+                      {(action) => (
+                        <Menu.Item data-slot="session-plugin-pill-action" class="!px-2" onSelect={() => action.run()}>
+                          <PillIcon name={action.icon} />
+                          <span dir="auto" class="whitespace-nowrap">
+                            {action.label}
                           </span>
                         </Menu.Item>
                       )}
                     </For>
-                  </Menu.Group>
-                </Menu.Content>
-              </Menu.Portal>
-            </Menu>
-          )}
+                  </div>
+                </Show>
+              </Menu.Content>
+            </Menu.Portal>
+          </Menu>
         </Show>
       )}
     </Show>

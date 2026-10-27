@@ -619,6 +619,18 @@ export interface ComposerPillRow {
   run?(): void
 }
 
+/** A button in the row at the bottom of the menu a composer pill opens. */
+export interface ComposerPillAction {
+  /** The button's id, unique within the pill. */
+  readonly id: string
+  /** The button's text. */
+  readonly label: string
+  /** The button's icon. Omit it for none. */
+  readonly icon?: IconName
+  /** Runs when the user clicks the button; the menu then closes. */
+  run(): void
+}
+
 /** What a composer pill shows above one session's composer. */
 export interface ComposerPillView {
   /** The capsule's text; long text truncates. */
@@ -632,9 +644,14 @@ export interface ComposerPillView {
    * most three lines, then truncates.
    */
   readonly title?: string
-  /** The menu the pill opens. Omit it for a pill that runs `run` instead. */
+  /** The rows of the menu the pill opens. Omit them, and `actions`, for a pill that runs `run` instead. */
   readonly rows?: readonly ComposerPillRow[]
-  /** Runs when the user clicks a pill without `rows`. */
+  /**
+   * Buttons in one row at the bottom of the menu the pill opens, for actions on what the pill shows, such as pause and
+   * clear. The pill opens its menu when it has rows or actions.
+   */
+  readonly actions?: readonly ComposerPillAction[]
+  /** Runs when the user clicks a pill without `rows` or `actions`. */
   run?(): void
 }
 
