@@ -103,7 +103,11 @@ function PluginPill(props: { pill: ComposerPill; input: ComposerPillProps; align
               <Menu.Portal>
                 <Menu.Content data-slot="session-plugin-pill-menu" aria-label={current().title ?? current().label}>
                   <Menu.Group>
-                    <Menu.GroupLabel>{current().title ?? current().label}</Menu.GroupLabel>
+                    <Menu.GroupLabel class="!h-auto max-w-80 !py-1.5">
+                      <span dir="auto" class="line-clamp-3 break-words">
+                        {current().title ?? current().label}
+                      </span>
+                    </Menu.GroupLabel>
                     <For each={rows()}>
                       {(row) => (
                         <Menu.Item

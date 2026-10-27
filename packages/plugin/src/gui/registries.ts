@@ -627,7 +627,10 @@ export interface ComposerPillView {
   readonly icon?: IconName
   /** Colors the capsule's icon. */
   readonly tone?: ComposerPillTone
-  /** Accessible name, and the heading of the menu the pill opens, when it differs from `label`. */
+  /**
+   * Accessible name, and the heading of the menu the pill opens, when it differs from `label`. The heading wraps to at
+   * most three lines, then truncates.
+   */
   readonly title?: string
   /** The menu the pill opens. Omit it for a pill that runs `run` instead. */
   readonly rows?: readonly ComposerPillRow[]
