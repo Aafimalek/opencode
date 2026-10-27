@@ -668,6 +668,7 @@ export const builtins = compose({
   wsl: { ...wsl, mainEntry: () => import("./wsl/main") },
   "microsoft-office": microsoftOffice,
   sources,
+  goal,
 })
 ```
 
@@ -692,6 +693,7 @@ export const builtins = compose({
   wsl: { ...wsl, windowEntry: eager(wslRenderer) },
   "microsoft-office": { ...microsoftOffice, windowEntry: eager(microsoftOfficeRenderer) },
   sources: { ...sources, windowEntry: eager(sourcesRenderer) },
+  goal: { ...goal, windowEntry: eager(goalRenderer) },
 })
 ```
 
