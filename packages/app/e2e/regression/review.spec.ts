@@ -27,11 +27,11 @@ for (const view of ["desktop", "mobile"] as const) {
 
     if (view === "desktop") await openReviewLauncher(panel)
     await expect(panel.getByText("Track, review, and undo changes in this project")).toBeVisible()
-    await expect(panel.getByRole("button", { name: "All", exact: true })).toHaveCount(0)
+    await expect(panel.getByRole("button", { name: "All changes", exact: true })).toHaveCount(0)
     const init = panel.getByRole("button", { name: "Create Git repository" })
     await init.click()
     await expect.poll(() => requests).toEqual([{ directory: workspace.directory, provider: "git" }])
-    await expect(panel.getByRole("button", { name: "All", exact: true })).toBeVisible()
+    await expect(panel.getByRole("button", { name: "All changes", exact: true })).toBeVisible()
     await expect(init).toHaveCount(0)
   })
 }
@@ -82,13 +82,13 @@ test("Git initialization belongs to its session and refreshes after a session sw
   expect((await response).status()).toBe(204)
   expect((await refreshed).status()).toBe(200)
   expect(requests).toEqual([{ directory: workspace.directory, provider: "git" }])
-  await expect(panel.getByRole("button", { name: "All", exact: true })).toBeVisible()
+  await expect(panel.getByRole("button", { name: "All changes", exact: true })).toBeVisible()
   await expect(init).toHaveCount(0)
   await expect(page.getByText("Request failed", { exact: true })).toHaveCount(0)
 
   await page.locator("[data-titlebar-tab-slot]", { hasText: "Initialize Alpha" }).click()
   await expectSessionTitle(page, "Initialize Alpha")
-  await expect(panel.getByRole("button", { name: "All", exact: true })).toBeVisible()
+  await expect(panel.getByRole("button", { name: "All changes", exact: true })).toBeVisible()
   await expect(pending).toHaveCount(0)
 })
 
@@ -1110,7 +1110,7 @@ test("shows and restores last turn changes from the session diff", async ({ page
   const panel = page.locator("#review-panel")
   await page.getByRole("button", { name: "Toggle review" }).click()
   await openReviewLauncher(panel)
-  await page.getByRole("button", { name: "All", exact: true }).click()
+  await page.getByRole("button", { name: "All changes", exact: true }).click()
   await page.getByRole("option", { name: /^Last turn/ }).click()
   await expect(page.getByRole("button", { name: "Last turn", exact: true })).toBeVisible()
   await expect(panel.locator('[data-slot="session-review-v2-file-name"]')).toHaveText("delta.ts")
@@ -1166,7 +1166,7 @@ test("keeps the review state a session stored before plugins", async ({ page }) 
   await expect(trigger("beta.ts")).toHaveAttribute("aria-expanded", "false")
 })
 
-test("defaults to All, compares against the branch's review base, and keeps the source across sessions", async ({
+test("defaults to All changes, compares against the branch's review base, and keeps the source across sessions", async ({
   page,
 }) => {
   const bases: (string | undefined)[] = []
@@ -1195,30 +1195,21 @@ test("defaults to All, compares against the branch's review base, and keeps the 
     },
   })
   const panel = page.locator("#review-panel")
-  const header = panel.locator('[data-slot="session-review-v2-sidebar-header"]')
   const source = (name: string) => panel.getByRole("button", { name, exact: true })
   const files = panel.getByRole("treeitem")
 
-  await expect(source("All")).toBeVisible()
-  await expect(header.getByText("vs release", { exact: true })).toBeVisible()
+  await expect(source("All changes")).toBeVisible()
   await expect(files).toHaveText(["alpha.ts", "beta.ts"])
   expect(bases).toContain("refs/heads/release")
 
-  await source("All").click()
-  await expect(page.getByRole("option")).toHaveText([
-    "AllBranch + local changes",
-    "CommittedBranch commits only",
-    "UncommittedLocal changes only",
-    "Last turnLatest session turn",
-  ])
+  await source("All changes").click()
+  await expect(page.getByRole("option")).toHaveText(["All changes", "Committed", "Uncommitted", "Last turn"])
   await page.getByRole("option", { name: /^Committed/ }).click()
   await expect(files).toHaveText(["alpha.ts"])
-  await expect(header.getByText("vs release", { exact: true })).toBeVisible()
 
   await source("Committed").click()
   await page.getByRole("option", { name: /^Uncommitted/ }).click()
   await expect(files).toHaveText(["beta.ts"])
-  await expect(header.getByText("vs HEAD", { exact: true })).toBeVisible()
 
   // The source is one choice for the app: another session and a reload keep it.
   await page.locator("[data-titlebar-tab-slot]", { hasText: "Sources Beta" }).click()
@@ -1267,7 +1258,7 @@ test("desktop review waits for the session's stored state before it loads change
   await expectSessionTitle(page, title)
   await toggle.click()
   await openReviewLauncher(page.locator("#review-panel"))
-  await mode("All").click()
+  await mode("All changes").click()
   await page.getByRole("option", { name: /^Uncommitted/ }).click()
   await expect(file).toHaveText("gamma.ts")
   await expect
@@ -1286,7 +1277,7 @@ test("desktop review waits for the session's stored state before it loads change
   await expectSessionTitle(page, title)
   await expect(toggle).toHaveAttribute("aria-expanded", "true")
   await expect(page.locator("#review-panel").getByText("Loading changes…", { exact: true })).toBeVisible()
-  await expect(mode("All")).toHaveCount(0)
+  await expect(mode("All changes")).toHaveCount(0)
   await page.getByRole("button", { name: "Load held storage" }).click()
   await expect(mode("Uncommitted")).toBeVisible()
   await expect(file).toHaveText("gamma.ts")
@@ -1308,7 +1299,7 @@ test("a chosen source the session stops offering shows as the first offered, and
 
   await page.getByRole("button", { name: "Toggle review", exact: true }).click()
   await openReviewLauncher(page.locator("#review-panel"))
-  await mode("All").click()
+  await mode("All changes").click()
   await page.getByRole("option", { name: /^Committed/ }).click()
   await expect(file).toHaveText("beta.ts")
 

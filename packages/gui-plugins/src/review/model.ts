@@ -666,18 +666,6 @@ export function createReviewModel(input: {
     activeFile,
     // The source picker waits for the stored source.
     canReview: () => !!view().project && loaded(),
-    // What the source compares against, as the TUI names it: the base for Branch and Committed, HEAD for local changes.
-    base: () => {
-      const value = mode()
-
-      if (value === "working") return "HEAD"
-
-      if (!comparesBase(value)) return undefined
-
-      if (!baseQuery.isFetched) return undefined
-
-      return baseQuery.data?.name ?? vcs()?.branch.default
-    },
     comments: {
       actions: commentActions,
       add: addComment,
