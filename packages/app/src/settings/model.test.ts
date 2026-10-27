@@ -37,7 +37,7 @@ describe("settings timeline detail migration", () => {
 })
 
 describe("settings schema", () => {
-  test("keeps the values extensions copy out once and discards retired preferences", () => {
+  test("keeps the values plugins copy out once and discards retired preferences", () => {
     const settings = decode({
       general: {
         showStatus: true,
@@ -95,7 +95,6 @@ describe("settings schema", () => {
         showTurnDiffs: false,
         backgroundActivity: "left",
         timelineWidth: "comfortable",
-        generatedUI: true,
         newIcons: false,
         newModelPicker: false,
         mobileTitlebarPosition: "top",

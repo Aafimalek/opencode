@@ -5,7 +5,7 @@ import { DialogProvider } from "@opencode/ui/context/dialog"
 import { FileComponentProvider } from "@opencode/ui/context/file"
 import { Font } from "@opencode/ui/font"
 import { ThemeProvider } from "@opencode/ui/theme/context"
-import { MetaProvider } from "@solidjs/meta"
+import { MetaProvider, Title } from "@solidjs/meta"
 import { type BaseRouterProps, Router } from "@solidjs/router"
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query"
 import { type Component, createRenderEffect, ErrorBoundary, type JSX, type ParentProps } from "solid-js"
@@ -20,7 +20,7 @@ import { SettingsProvider } from "@/settings/model"
 import { TabsProvider } from "@/shell/tabs/tabs"
 import { ErrorPage } from "@/shell/errors/error"
 import { AppRoutes, File, preloadRoute } from "@/shell/routes/routes"
-import { ExtensionRoot } from "@/runtime/extension/root"
+import { PluginRoot } from "@/runtime/plugin/root"
 
 export { preloadRoute }
 
@@ -57,6 +57,7 @@ export function AppBaseProviders(
 ) {
   return (
     <MetaProvider>
+      <Title>OpenCode</Title>
       <Font />
       <ThemeProvider
         onThemeApplied={(_, mode, scheme) => {
@@ -74,9 +75,9 @@ export function AppBaseProviders(
             >
               <QueryProvider>
                 <DialogProvider>
-                  <ExtensionRoot>
+                  <PluginRoot>
                     <FileComponentProvider component={File}>{props.children}</FileComponentProvider>
-                  </ExtensionRoot>
+                  </PluginRoot>
                 </DialogProvider>
               </QueryProvider>
             </ErrorBoundary>

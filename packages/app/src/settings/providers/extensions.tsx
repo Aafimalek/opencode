@@ -1,3 +1,4 @@
+import { Predicate } from "effect"
 import { Component, For, Show, createEffect, createMemo, createResource, type JSX } from "solid-js"
 import { useDialog } from "@opencode/ui/context/dialog"
 import { Icon } from "@opencode/ui/icon"
@@ -8,10 +9,12 @@ import { TruncatedText } from "@opencode/ui/truncated-text"
 import { useLanguage } from "@/runtime/i18n/language"
 import { useData } from "@/runtime/server/current"
 import { useServerSDK } from "@/runtime/server/client"
+import { ServerConnection } from "@/runtime/server/registry"
 import { useMcpToggle } from "@/providers/connect/mcp"
 import { DialogMcp } from "@/providers/connect/mcp-dialog"
-import { pluginLabels } from "@/providers/catalog/plugin"
+import { ExtensionPlugins } from "@/runtime/plugin/extension-plugins"
 import { ExternalLink } from "@/runtime/platform/external-link"
+import { usePlatform } from "@/runtime/platform/platform"
 import { SettingsList } from "@/settings/list"
 import type { SettingsView } from "@/settings/surface"
 import "@/settings/settings.css"
@@ -24,11 +27,8 @@ const statusLabels = {
   disabled: "mcp.status.disabled",
 } as const
 
-interface PluginRowItem {
-  name: string
-}
-
 export const SettingsExtensions: Component<{
+  directory?: string
   subtab?: SettingsView["subtab"]
   onSubtab: (value: SettingsView["subtab"]) => void
   headerAction?: JSX.Element
@@ -37,17 +37,27 @@ export const SettingsExtensions: Component<{
   const serverSdk = useServerSDK()
   const data = useData()
   const dialog = useDialog()
-  const toggleMcp = useMcpToggle()
+  const platform = usePlatform()
+  // MCP connections are per Location, so read and toggle them where the active session runs, as the TUI does. The
+  // names come from the default Location so this page lists only the servers available to all projects.
+  const location = () => (props.directory ? { directory: props.directory } : data.location.default())
+  const toggleMcp = useMcpToggle(() => props.directory)
 
-  // The synced list follows mcp.status.changed, so a finished sign-in shows up without a refetch.
+  // The synced lists follow mcp.status.changed, so a finished sign-in shows up without a refetch.
   createEffect(() => {
     if (serverSdk.connection.status() !== "connected") return
     void data.location.mcp.server.sync(data.location.default()).catch(() => undefined)
+
+    if (props.directory) void data.location.mcp.server.sync(location()).catch(() => undefined)
   })
 
-  const mcps = createMemo(() =>
-    (data.location.mcp.server.list(data.location.default()) ?? []).toSorted((a, b) => a.name.localeCompare(b.name)),
-  )
+  const mcps = createMemo(() => {
+    const active = data.location.mcp.server.list(location())
+
+    return (data.location.mcp.server.list(data.location.default()) ?? [])
+      .map((server) => active?.find((item) => item.name === server.name) ?? server)
+      .toSorted((a, b) => a.name.localeCompare(b.name))
+  })
 
   const toggle = (name: string) => {
     if (toggleMcp.isPending) return
@@ -64,7 +74,8 @@ export const SettingsExtensions: Component<{
     { initialValue: [] },
   )
 
-  const plugins = createMemo<PluginRowItem[]>(() => pluginLabels(pluginList.latest ?? []).map((name) => ({ name })))
+  // The desktop window runs the GUIs of its own server's plugins, so only that server's rows control them.
+  const own = () => !!platform.plugins && ServerConnection.builtin(serverSdk.server)
 
   createEffect(() => {
     if (serverSdk.connection.status() !== "connected") return
@@ -115,7 +126,7 @@ export const SettingsExtensions: Component<{
                     const busy = () => {
                       const target = toggleMcp.isPending ? toggleMcp.variables : undefined
 
-                      return (typeof target === "string" ? target : target?.name) === item.name
+                      return (Predicate.isString(target) ? target : target?.name) === item.name
                     }
 
                     // The dot shows the status, as in the MCPs dialog; the words stay for assistive technology.
@@ -138,9 +149,7 @@ export const SettingsExtensions: Component<{
                               class="mcp-status-action"
                               aria-label={language.t("dialog.mcp.error.viewLabel", { name: item.name })}
                               onClick={() =>
-                                dialog.show(() => (
-                                  <DialogMcp directory={data.location.default().directory} server={item.name} />
-                                ))
+                                dialog.show(() => <DialogMcp directory={location().directory} server={item.name} />)
                               }
                             >
                               {language.t("dialog.mcp.error.view")}
@@ -194,18 +203,7 @@ export const SettingsExtensions: Component<{
                   {language.t("settings.extensions.manageConfig")}
                 </span>
               </div>
-              <SettingsList variant="catalog">
-                <For each={plugins()}>
-                  {(plugin) => (
-                    <div class="settings-extension-row">
-                      <div class="settings-extension-lead">
-                        <Icon name="cube" class="text-v2-icon-icon-muted shrink-0" />
-                        <span class="settings-extension-name truncate">{plugin.name}</span>
-                      </div>
-                    </div>
-                  )}
-                </For>
-              </SettingsList>
+              <ExtensionPlugins plugins={pluginList.latest ?? []} own={own()} />
             </div>
           </Tabs.Content>
 

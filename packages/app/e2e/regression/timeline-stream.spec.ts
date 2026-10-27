@@ -43,7 +43,7 @@ const completed = {
 } satisfies SessionMessageAssistant
 
 test.describe("static projection", () => {
-  test("renders current protocol notices in CLI order @quarantine", async ({ page }) => {
+  test("renders current protocol notices in CLI order", async ({ page }) => {
     const ownerWarnings: string[] = []
     page.on("console", (message) => {
       if (message.text().includes("computations created outside a `createRoot` or `render`"))
@@ -80,8 +80,13 @@ test.describe("static projection", () => {
     await expect(notices.nth(1)).toContainText("Explore finished · Search code")
     await expect(notices.nth(2)).toContainText("Continuing after restart")
     await expect(notices.nth(3)).toContainText("Skill · Review")
-    await expect(notices).toHaveClass([/text-text-weak/, /text-text-weak/, /text-text-weak/, /text-text-weak/])
-    await expect(notices.locator(".text-text-strong")).toHaveCount(0)
+    await expect(notices).toHaveClass([
+      /text-v2-text-text-faint/,
+      /text-v2-text-text-faint/,
+      /text-v2-text-text-faint/,
+      /text-v2-text-text-faint/,
+    ])
+    await expect(notices.locator(".text-v2-text-text-base")).toHaveCount(0)
     expect(ownerWarnings).toEqual([])
   })
 
@@ -612,7 +617,10 @@ test("shows a background subagent's outcome as its own row where it finished", a
     }),
     inboxDelivered({ sessionID, inboxID: "msg_outcome" }),
     stepStarted(after),
-    ...partUpdated({ ...toolPart("call_read_after", "read", "completed", { filePath: "AGENTS.md" }), messageID: after.id }),
+    ...partUpdated({
+      ...toolPart("call_read_after", "read", "completed", { filePath: "AGENTS.md" }),
+      messageID: after.id,
+    }),
     messageUpdated(completedAssistantInfo(after)),
   ])
 
@@ -799,14 +807,15 @@ test.describe("Working", () => {
     await page.clock.install({ time: 1700000001000 })
     await page.reload()
     await timeline.transport.waitForConnection()
-    await page.clock.pauseAt(1700000001000 + 492_000)
 
     const working = page.locator('[data-component="session-working"]')
     const group = page.locator('[data-component="collapsed-tool-group"]')
     const trigger = group.locator('[data-component="context-tool-group-trigger"]')
     const elapsed = trigger.locator('[data-slot="basic-tool-tool-subtitle"]')
     await expect(group).toHaveAttribute("data-timeline-part-ids", `${assistantID}:reasoning:0`)
+    // The jump below fires the 60 s timeout of any request still in flight, so the busy status must land first.
     await expect(trigger).toHaveAttribute("aria-label", "Thinking")
+    await page.clock.pauseAt(1700000001000 + 492_000)
     await expect(trigger.locator('[data-component="text-shimmer"]')).toHaveAttribute("data-active", "true")
     await expect(elapsed).toHaveText("8m 12s")
     await expect(working).toHaveCount(0)
@@ -904,7 +913,9 @@ test.describe("Working", () => {
     await expect(working).toBeVisible()
 
     await timeline.send(partUpdated(toolPart("prt_read_four", "read", "running", { path: "src/four.ts" })))
-    await expect(group.locator('[data-slot="basic-tool-tool-subtitle"]')).toHaveText("one.ts, two.ts, three.ts, four.ts")
+    await expect(group.locator('[data-slot="basic-tool-tool-subtitle"]')).toHaveText(
+      "one.ts, two.ts, three.ts, four.ts",
+    )
     await expect(working).toBeVisible()
 
     await timeline.send(partUpdated(toolPart("prt_read_four", "read", "completed", { path: "src/four.ts" })))
@@ -1413,9 +1424,7 @@ test.describe("background shortcut", () => {
     // Reaching the shell lands on the end of the timeline, which would otherwise follow new content again.
     { name: "at the end of the timeline", before: 40, searches: 0, after: 0 },
   ]) {
-    test(`holds a revealed shell ${fixture.name} just under its stuck group header${fixture.name === "from far below" ? " @quarantine" : ""}`, async ({
-      page,
-    }) => {
+    test(`holds a revealed shell ${fixture.name} just under its stuck group header`, async ({ page }) => {
       const timeline = await setupTimeline(page, {
         settings: { timelineDetail: detailed },
         sessionStatus: { [sessionID]: { type: "busy" } },
@@ -1638,9 +1647,7 @@ test.describe("compaction", () => {
     await expect(compaction).not.toContainText("Partial automatic summary.")
     await expect(compaction).not.toContainText("Session compaction started")
 
-    await timeline.send(
-      compactionEnded({ sessionID, reason: "auto", text: "## Checkpoint\n\nAutomatic details." }),
-    )
+    await timeline.send(compactionEnded({ sessionID, reason: "auto", text: "## Checkpoint\n\nAutomatic details." }))
     await expect(divider).toHaveAttribute("data-state", "done")
     await expect(divider).toHaveAccessibleName("Compacted")
     await expect(compaction).not.toContainText("Automatic details.")

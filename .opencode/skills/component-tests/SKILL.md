@@ -1,6 +1,6 @@
 ---
 name: component-tests
-description: Use when writing, changing, debugging, or reviewing the Playwright component tests that mount stories. That covers specs in packages/app/component-tests or packages/session-ui/component-tests, `*.fixture.tsx` files there or beside source (such as packages/gui-extensions/src/browser/panel.fixture.tsx), the stories they mount, and the shared harness in packages/stories (playwright/config.ts, playwright/story.ts, vite.config.ts, src/frame.tsx, src/index-plugin.ts, mocks). Also use when a component test is flaky, passed on retry, or fails with "Execution context was destroyed", "Failed to fetch dynamically imported module", or `#story-root` hidden. Covers mount args, source modules imported by URL, Vite dependency pre-bundling and reloads, a cold vs warm story server, mobile drawers, geometry, and checks before pushing.
+description: Use when writing, changing, debugging, or reviewing the Playwright component tests that mount stories. That covers specs in packages/app/component-tests or packages/session-ui/component-tests, `*.fixture.tsx` files there or beside source (such as packages/gui-plugins/src/browser/panel.fixture.tsx), the stories they mount, and the shared harness in packages/stories (playwright/config.ts, playwright/story.ts, vite.config.ts, src/frame.tsx, src/index-plugin.ts, mocks). Also use when a component test is flaky, passed on retry, or fails with "Execution context was destroyed", "Failed to fetch dynamically imported module", or `#story-root` hidden. Covers mount args, source modules imported by URL, Vite dependency pre-bundling and reloads, a cold vs warm story server, mobile drawers, geometry, and checks before pushing.
 ---
 
 # Component tests
@@ -15,7 +15,7 @@ Read these first rather than repeating them:
 
 ## Stories and `mount`
 
-- **Location.** Put the story next to the production component under `src/` of `ui`, `session-ui`, `app` or `gui-extensions`. The story server indexes `*.stories.tsx` files in those four trees (`packages/stories/vite.config.ts`, `src/index-plugin.ts`), reading each file's `export default { title, id }` and its `export const` stories from source.
+- **Location.** Put the story next to the production component under `src/` of `ui`, `session-ui`, `app` or `gui-plugins`. The story server indexes `*.stories.tsx` files in those four trees (`packages/stories/vite.config.ts`, `src/index-plugin.ts`), reading each file's `export default { title, id }` and its `export const` stories from source.
 - **Story ID.** It is the meta `id` if one is set (`packages/session-ui/src/components/session-review.stories.tsx:25`). Otherwise it is the kebab-cased `title`, then `--`, then the kebab-cased export. Check it at `http://127.0.0.1:6006/?id=<id>` on a running story server (`bun --cwd packages/stories dev`). A wrong ID renders nothing (the page throws `No story has the id …`), so `mount` waits out its full 30 s root wait (`story.ts:39`) and then fails.
 - **URL args.** `mount(id, { args, globals })` writes them into the URL as `key:value` pairs (`story.ts:20-36`). The frame reads every one: a value becomes a boolean or number when the story's own default for that key is one, `!true`/`!false`/`!null`/`!undefined` keep Storybook's meaning, and anything else stays text.
   - Give every arg a typed default. With `args: { split: false }` (`session-review.stories.tsx:129`), `split:false` arrives as a boolean.
@@ -29,7 +29,7 @@ Read these first rather than repeating them:
 
 Use these when the contract is not visible in a story, such as construction counts, unmount races or cache state.
 
-- **Fixture file.** Put a `*.fixture.tsx` file in `component-tests/` or beside the source it drives (`packages/gui-extensions/src/browser/panel.fixture.tsx`). It exports a `mountX()` that renders into a host with a `data-testid` (`packages/session-ui/component-tests/basic-tool.fixture.tsx:7-46`). Never end the name in `.spec` or `.test`.
+- **Fixture file.** Put a `*.fixture.tsx` file in `component-tests/` or beside the source it drives (`packages/gui-plugins/src/browser/panel.fixture.tsx`). It exports a `mountX()` that renders into a host with a `data-testid` (`packages/session-ui/component-tests/basic-tool.fixture.tsx:7-46`). Never end the name in `.spec` or `.test`.
 - **Mount it in three steps.**
   1. Mount a light story first, so that the app styles load.
   2. Import the fixture and call it inside `page.evaluate`.
@@ -40,7 +40,7 @@ Use these when the contract is not visible in a story, such as construction coun
 - **Module URLs.** Build each one with `sourceURL(new URL("<relative path with extension>", import.meta.url))` (`story.ts:10`), written as a string literal in the spec (`browser-pane-restore.spec.ts:6-24`). Any other spelling either fails to load or loads a second module instance whose contexts the page never provides; a hand-written `/@fs//...` is the documented second-instance case (`story.ts:6-9`). The literal also matters for pre-bundling (next section).
 - **Aliases.** A module imported by URL is the real file. App code that reaches the same module through a `vite.config.ts` alias gets the mock (`browser-pane-restore.spec.ts:95-96`). Decide which of the two the contract needs.
 - **Spec imports.** Import source modules into the spec with `import type` only (`browser-pane-restore.spec.ts:2-4`). A value import runs browser code in the Node runner.
-- **Async order.** Let the test decide the order through deferreds the fixture exposes (`mountExtensionHost`, `packages/app/component-tests/extension-host.fixture.tsx:135`). Await the outcome they lead to (`extension-host.spec.ts:46-77`), or poll in-page state with `until` (`extension-host.fixture.tsx:124-132`). Do not copy the fixed in-page `setTimeout` waits that other cases in `extension-host.spec.ts` (`:38`, `:88-90`, `:108-119`) use to prove a negative.
+- **Async order.** Let the test decide the order through deferreds the fixture exposes (`mountPluginHost`, `packages/app/component-tests/plugin-host.fixture.tsx:151`). Await the outcome they lead to (`plugin-host.spec.ts:38-69`), or poll in-page state with `until` (`plugin-host.fixture.tsx:141-148`). Do not copy the fixed in-page `setTimeout` waits that other cases in `plugin-host.spec.ts` (`:30`, `:80-82`, `:100-111`) use to prove a negative.
 
 ## Vite pre-bundling and reloads
 
@@ -56,7 +56,7 @@ Use these when the contract is not visible in a story, such as construction coun
 
 ## Cold vs warm, and what a mount costs
 
-- **CI is always cold.** Each suite runs in its own leg on a fresh runner (`test.yml:228-229`), so every leg starts the story server with no cache and runs the full scan.
+- **CI is always cold.** Each suite runs in its own leg on a fresh runner (`check-test.yml:239-240`), so every leg starts the story server with no cache and runs the full scan.
 - **Do not count the first test.** In one CI run of this harness, the first test per worker took 5.7-7.0 s on Linux and 14-15 s on Windows. Warm tests had a median of 1.5 s (app) and 2.0 s (session-ui) on Linux and 2.4-2.6 s on Windows. A warm `mount` (navigation plus root wait) had a median of 1.0 s (app) and 1.5 s (session-ui) on Linux and 1.7-1.9 s on Windows, which is most of a typical test. Judge cost by warm attempts.
 - **Local reuse.** Playwright reuses whatever answers on the port (`config.ts:20`; default 6006, `config.ts:3`). That hides cold cost and reloads, and with several worktrees another checkout's story server can serve your tests its own code. Set `PLAYWRIGHT_STORIES_PORT` or `PLAYWRIGHT_STORIES_URL` (`config.ts:3-4`). On Windows pick a port below 49152: the dynamic range starts there, and Hyper-V and WSL reserve blocks inside it (`netsh int ipv4 show excludedportrange protocol=tcp`). Two story servers in one checkout share, and race on, `packages/stories/node_modules/.vite`, so a separate port is not enough: use a separate worktree.
 - **Keep mounts few.** Put one scenario in each test, and resize in place with `page.setViewportSize` (`composer.spec.ts:28-29`) instead of mounting again.
@@ -101,15 +101,15 @@ From the owning package (`packages/session-ui` or `packages/app`):
 5. **Windows.** Check platform keys and labels and font-dependent geometry. The Windows component legs are the authoritative check.
    - Do not skip on Windows, and do not raise `config.ts` timeouts, retries or the `mount` wait.
    - If one test does genuinely expensive work, call `story.setTimeout(...)` in that test, with a comment that names the work.
-6. **Confirm CI ran the component legs.** E2E never runs on pushes to dev (`test.yml:28`), so no post-merge run catches a regression.
-   - The `affected` gate filters on `@opencode/app` and `@opencode/stories` (`test.yml:53-54`). `ui`, `session-ui` and `gui-extensions` count through app's dependencies. `workflow_dispatch` forces the legs on (`test.yml:48-51`).
-   - `test.yml` is listed in `globalDependencies` (`turbo.json:8`), so editing it marks every package affected.
-   - The required `e2e (linux)` and `e2e (windows)` checks also pass when no leg was needed (`test.yml:316-335`). Look for `e2e (<os>, session-ui-components)` and `e2e (<os>, app-components)`.
+6. **Confirm CI ran the component legs.** E2E never runs on pushes to dev (`check-test.yml:28`), so no post-merge run catches a regression.
+   - The `affected` gate filters on `@opencode/app` and `@opencode/stories` (`check-test.yml:60-61`). `ui`, `session-ui` and `gui-plugins` count through app's dependencies. `workflow_dispatch` forces the legs on (`check-test.yml:56-59`).
+   - `check-test.yml` is listed in `globalDependencies` (`turbo.json:8`), so editing it marks every package affected.
+   - The required `e2e (linux)` and `e2e (windows)` checks also pass when no leg was needed (`check-test.yml:329-352`). Look for `e2e (<os>, session-ui-components)` and `e2e (<os>, app-components)`.
    - If CI skipped them, report your local cold run in the PR.
 
 ## When CI flakes
 
-- **Download the artifact.** Run `gh run download <run-id> -n playwright-<linux|windows>-<session-ui|app>-components-<attempt> -D <dir>` (`test.yml:301-314`). Results are in `<dir>/session-ui/component-tests/` or `<dir>/app/component-tests/`. Only the first retry has a trace and, in CI, a video: `test-results/<test>-components-retry1/`.
+- **Download the artifact.** Run `gh run download <run-id> -n playwright-<linux|windows>-<session-ui|app>-components-<attempt> -D <dir>` (`check-test.yml:314-327`). Results are in `<dir>/session-ui/component-tests/` or `<dir>/app/component-tests/`. Only the first retry has a trace and, in CI, a video: `test-results/<test>-components-retry1/`.
 - **Find reloads.** The story server's output reaches the job log with a `[WebServer]` prefix, so grep the log for `optimized dependencies changed`. In the retry trace, a reload shows up as any of:
   - a second frame (`/?id=…`) load and a second `[vite] connecting...`;
   - the deps `?v=` hash changing between requests;
