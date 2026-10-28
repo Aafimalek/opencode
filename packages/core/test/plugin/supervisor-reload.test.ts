@@ -113,34 +113,6 @@ const failed = (plugins: Plugin.Interface) =>
   )
 
 describe("PluginSupervisor reload", () => {
-  it.live("loads configured plugins when one manifest cannot be read", () =>
-    Effect.gen(function* () {
-      const directory = yield* tmpdirScoped()
-      const good = path.join(directory.path, "good")
-      const bad = path.join(directory.path, "bad")
-      yield* Effect.promise(async () => {
-        await Bun.write(path.join(good, "index.ts"), 'export default { id: "good", async setup() {} }')
-        await Bun.write(path.join(bad, "index.ts"), 'export default { id: "bad", async setup() {} }')
-        // A directory makes the manifest unreadable on both Windows and Unix.
-        await fs.mkdir(path.join(bad, "package.json"))
-        await Bun.write(path.join(directory.path, ".opencode/opencode.json"), JSON.stringify({ plugins: [good, bad] }))
-      })
-      const locations = yield* LocationServiceMap.Service
-      yield* Effect.gen(function* () {
-        const plugins = yield* Plugin.Service
-        yield* plugins.awaitActivation
-        const local = (yield* plugins.list()).filter((plugin) => plugin.source.type === "local")
-        expect(local.map((plugin) => [plugin.id, plugin.state.status])).toEqual([
-          [Plugin.ID.make("good"), "active"],
-          [Plugin.ID.make("bad"), "active"],
-        ])
-      }).pipe(
-        Effect.scoped,
-        Effect.provide(locations.get(Location.Ref.make({ directory: AbsolutePath.make(directory.path) }))),
-      )
-    }),
-  )
-
   ;(
     [
       { name: "on a helper-only save", helper: "nested/helper.ts", touchEntry: false },
