@@ -153,22 +153,35 @@ describe("GithubCopilotPlugin", () => {
     Effect.gen(function* () {
       yield* addPlugin()
       const hooks = yield* PluginHooks.Service
-      const event = yield* hooks.trigger("session", "http.request", {
-        sessionID: Session.ID.make("ses_test"),
-        agent: Agent.ID.make("build"),
-        model: Model.Ref.make({ providerID: Provider.ID.githubCopilot, id: Model.ID.make("claude-sonnet-4.5") }),
-        kind: "primary",
-        request: new Request("https://api.githubcopilot.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": "token" },
-          body: JSON.stringify({ messages: [{ role: "user", content: [{ type: "text", text: "hello" }] }] }),
-        }),
-      })
-      expect(event.request.headers.get("authorization")).toBe("Bearer token")
-      expect(event.request.headers.has("x-api-key")).toBe(false)
-      expect(event.request.headers.get("x-initiator")).toBe("user")
-      expect(event.request.headers.get("anthropic-beta")).toBe("interleaved-thinking-2025-05-14")
-      expect(event.request.headers.get("x-github-api-version")).toBe("2026-08-01")
+      for (const [existing, expected] of [
+        [
+          "thinking-binding-controls-2026-08-01",
+          "thinking-binding-controls-2026-08-01, interleaved-thinking-2025-05-14",
+        ],
+        ["interleaved-thinking-2025-05-14", "interleaved-thinking-2025-05-14"],
+        ["", "interleaved-thinking-2025-05-14"],
+      ]) {
+        const event = yield* hooks.trigger("session", "http.request", {
+          sessionID: Session.ID.make("ses_test"),
+          agent: Agent.ID.make("build"),
+          model: Model.Ref.make({ providerID: Provider.ID.githubCopilot, id: Model.ID.make("claude-sonnet-4.5") }),
+          kind: "primary",
+          request: new Request("https://api.githubcopilot.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": "token",
+              "anthropic-beta": existing,
+            },
+            body: JSON.stringify({ messages: [{ role: "user", content: [{ type: "text", text: "hello" }] }] }),
+          }),
+        })
+        expect(event.request.headers.get("authorization")).toBe("Bearer token")
+        expect(event.request.headers.has("x-api-key")).toBe(false)
+        expect(event.request.headers.get("x-initiator")).toBe("user")
+        expect(event.request.headers.get("anthropic-beta")).toBe(expected)
+        expect(event.request.headers.get("x-github-api-version")).toBe("2026-08-01")
+      }
     }),
   )
 

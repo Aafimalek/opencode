@@ -505,7 +505,13 @@ function applyHeaders(
   if (metadata.agent) headers.set("x-initiator", "agent")
   else if (!headers.has("x-initiator")) headers.set("x-initiator", "user")
   if (metadata.vision) headers.set("Copilot-Vision-Request", "true")
-  if (anthropic) headers.set("anthropic-beta", "interleaved-thinking-2025-05-14")
+  // Preserve model-specific betas when adding Copilot's interleaved-thinking capability.
+  if (anthropic) {
+    const beta = headers.get("anthropic-beta")
+    if (!beta) headers.set("anthropic-beta", "interleaved-thinking-2025-05-14")
+    else if (!beta.split(",").some((value) => value.trim() === "interleaved-thinking-2025-05-14"))
+      headers.append("anthropic-beta", "interleaved-thinking-2025-05-14")
+  }
 }
 
 // Mirrors the Copilot client's X-Interaction-Type vocabulary: the agent loop is the default,
