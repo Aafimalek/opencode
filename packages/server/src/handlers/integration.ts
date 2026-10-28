@@ -38,6 +38,7 @@ export const IntegrationHandler = HttpApiBuilder.group(Api, "server.integration"
       .handle(
         "integration.get",
         Effect.fn(function* (ctx) {
+          yield* Plugin.awaitActivation
           const service = yield* Integration.Service
           const integration = yield* service.get(ctx.params.integrationID)
           if (!integration)
@@ -67,6 +68,7 @@ export const IntegrationHandler = HttpApiBuilder.group(Api, "server.integration"
       .handle(
         "integration.connect.key",
         Effect.fn(function* (ctx) {
+          yield* Plugin.awaitActivation
           const service = yield* Integration.Service
           if (!(yield* service.get(ctx.params.integrationID)))
             return yield* new IntegrationNotFoundError({
@@ -87,6 +89,7 @@ export const IntegrationHandler = HttpApiBuilder.group(Api, "server.integration"
       .handle(
         "integration.connect.external",
         Effect.fn(function* (ctx) {
+          yield* Plugin.awaitActivation
           const service = yield* Integration.Service
           if (!(yield* service.get(ctx.params.integrationID)))
             return yield* new IntegrationNotFoundError({
@@ -107,6 +110,7 @@ export const IntegrationHandler = HttpApiBuilder.group(Api, "server.integration"
       .handle(
         "integration.oauth.connect",
         Effect.fn(function* (ctx) {
+          yield* Plugin.awaitActivation
           const service = yield* Integration.Service
           return yield* response(
             authorize(
@@ -123,6 +127,7 @@ export const IntegrationHandler = HttpApiBuilder.group(Api, "server.integration"
       .handle(
         "integration.oauth.status",
         Effect.fn(function* (ctx) {
+          yield* Plugin.awaitActivation
           const service = yield* Integration.Service
           if (!(yield* service.get(ctx.params.integrationID)))
             return yield* new IntegrationNotFoundError({
@@ -151,6 +156,7 @@ export const IntegrationHandler = HttpApiBuilder.group(Api, "server.integration"
       .handle(
         "integration.oauth.complete",
         Effect.fn(function* (ctx) {
+          yield* Plugin.awaitActivation
           const service = yield* Integration.Service
           if (!(yield* service.get(ctx.params.integrationID)))
             return yield* new IntegrationNotFoundError({
@@ -200,6 +206,7 @@ export const IntegrationHandler = HttpApiBuilder.group(Api, "server.integration"
       .handle(
         "integration.command.connect",
         Effect.fn(function* (ctx) {
+          yield* Plugin.awaitActivation
           const service = yield* Integration.Service
           const integration = yield* service.get(ctx.params.integrationID)
           if (!integration)
@@ -227,6 +234,7 @@ export const IntegrationHandler = HttpApiBuilder.group(Api, "server.integration"
       .handle(
         "integration.command.status",
         Effect.fn(function* (ctx) {
+          yield* Plugin.awaitActivation
           const service = yield* Integration.Service
           if (!(yield* service.get(ctx.params.integrationID)))
             return yield* new IntegrationNotFoundError({
